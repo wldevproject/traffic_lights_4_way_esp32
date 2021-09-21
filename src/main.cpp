@@ -30,12 +30,12 @@
 #define FIREBASE_HOST "fir-cloudmessage-bb89a.firebaseio.com"
 #define FIREBASE_AUTH "0rK6akg5dvL1bYsG47iLj0MexMHVbR0x0BIEqnDk"
 
+int greenDelay = 0;
 // orange light wait time
 int orangeDelay = 2;
 // time that both directions are red, before green starts
 int redDelay = 500;
-
-int greenDelay = 0;
+// green light wait time
 
 int green1Delay = 5;
 int green2Delay = 5;
@@ -43,29 +43,23 @@ int green3Delay = 5;
 int green4Delay = 5;
 
 int cd = 0;
+
 // name pins for lights
-//{Red, Orange, Green};
-int signal1[] = {13, 12, 14};
-int signal2[] = {33, 32, 26};
-int signal3[] = {23, 19, 5};
-int signal4[] = {2, 4, 15};
+int r1Pin = 13;
+int o1Pin = 12;
+int g1Pin = 14;
 
-// other mode pin
-// int r1Pin = 13;
-// int o1Pin = 12;
-// int g1Pin = 14;
+int r2Pin = 33;
+int o2Pin = 32;
+int g2Pin = 26;
 
-// int r2Pin = 33;
-// int o2Pin = 32;
-// int g2Pin = 26;
+int r3Pin = 23;
+int o3Pin = 19;
+int g3Pin = 5;
 
-// int r3Pin = 23;
-// int o3Pin = 19;
-// int g3Pin = 5;
-
-// int r4Pin = 2;
-// int o4Pin = 4;
-// int g4Pin = 15;
+int r4Pin = 2;
+int o4Pin = 4;
+int g4Pin = 15;
 
 // set initial times for lights
 unsigned long greenMillis = 0;
@@ -100,33 +94,6 @@ String status = "0";
 uint8_t curString = 0;
 
 // Sprite Definition
-const uint8_t F_ROCKET = 2;
-const uint8_t W_ROCKET = 11;
-const uint8_t PROGMEM rocket[F_ROCKET * W_ROCKET] = // rocket
-    {
-        0x18,
-        0x24,
-        0x42,
-        0x81,
-        0x99,
-        0x18,
-        0x99,
-        0x18,
-        0xa5,
-        0x5a,
-        0x81,
-        0x18,
-        0x24,
-        0x42,
-        0x81,
-        0x18,
-        0x99,
-        0x18,
-        0x99,
-        0x24,
-        0x42,
-        0x99,
-};
 
 const uint8_t F_PMAN1 = 6;
 const uint8_t W_PMAN1 = 8;
@@ -309,14 +276,6 @@ String databasePath = "";
 String textTemp = "";
 String statusTemp = "";
 
-// Stores the elapsed time from device start up
-unsigned long elapsedMillis = 0;
-// The frequency of sensor updates to firebase, set to 10seconds
-unsigned long update_interval = 5000;
-// Dummy counter to test initial firebase updates
-int count = 0;
-// Store device authentication status
-
 void Wifi_Init()
 {
   pinMode(2, OUTPUT);
@@ -386,44 +345,27 @@ void rtc_init()
 void trafficLight_init()
 {
   // initialise pins for leds as outputs
-  for (int i = 0; i < 3; i++)
-  {
-    pinMode(signal1[i], OUTPUT);
-    pinMode(signal2[i], OUTPUT);
-    pinMode(signal3[i], OUTPUT);
-    pinMode(signal4[i], OUTPUT);
-  }
+  pinMode(r1Pin, OUTPUT);
+  pinMode(o1Pin, OUTPUT);
+  pinMode(g1Pin, OUTPUT);
+  pinMode(r2Pin, OUTPUT);
+  pinMode(o2Pin, OUTPUT);
+  pinMode(g2Pin, OUTPUT);
+  pinMode(r3Pin, OUTPUT);
+  pinMode(o3Pin, OUTPUT);
+  pinMode(g3Pin, OUTPUT);
+  pinMode(r4Pin, OUTPUT);
+  pinMode(o4Pin, OUTPUT);
+  pinMode(g4Pin, OUTPUT);
+
   // turn on green light direction 1
-  digitalWrite(signal1[2], HIGH);
+  digitalWrite(g1Pin, HIGH);
   // turn on red light direction 2
-  digitalWrite(signal2[0], HIGH);
+  digitalWrite(r2Pin, HIGH);
   // turn on red light direction 3
-  digitalWrite(signal3[0], HIGH);
+  digitalWrite(r3Pin, HIGH);
   // turn on red light direction 4
-  digitalWrite(signal4[0], HIGH);
-
-  // // initialise pins for leds as outputs
-  // pinMode(r1Pin, OUTPUT);
-  // pinMode(o1Pin, OUTPUT);
-  // pinMode(g1Pin, OUTPUT);
-  // pinMode(r2Pin, OUTPUT);
-  // pinMode(o2Pin, OUTPUT);
-  // pinMode(g2Pin, OUTPUT);
-  // pinMode(r3Pin, OUTPUT);
-  // pinMode(o3Pin, OUTPUT);
-  // pinMode(g3Pin, OUTPUT);
-  // pinMode(r4Pin, OUTPUT);
-  // pinMode(o4Pin, OUTPUT);
-  // pinMode(g4Pin, OUTPUT);
-
-  // // turn on green light direction 1
-  // digitalWrite(g1Pin, HIGH);
-  // // turn on red light direction 2
-  // digitalWrite(r2Pin, HIGH);
-  // // turn on red light direction 3
-  // digitalWrite(r3Pin, HIGH);
-  // // turn on red light direction 4
-  // digitalWrite(r4Pin, HIGH);
+  digitalWrite(r4Pin, HIGH);
 }
 
 // start the setup
@@ -432,19 +374,8 @@ void setup()
   Serial.begin(115200);
   cd = green1Delay;
   greenDelay = 5;
-  if (!rtc.begin())
-  {
-    Serial.println("Couldn't find RTC");
-    Serial.flush();
-    abort();
-  }
 
-  if (rtc.lostPower())
-  {
-    Serial.println("RTC lost power, let's set the time!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
-
+  rtc_init();
   Wifi_Init();
   firebase_init();
   matrix_init();
@@ -456,27 +387,23 @@ void goOrange(int currentDirection)
 {
   if (currentDirection == 1)
   {
-    // Serial.print(" goOrange 1 : nyala");
-    digitalWrite(signal1[2], LOW);
-    digitalWrite(signal1[1], HIGH);
+    digitalWrite(g1Pin, LOW);
+    digitalWrite(o1Pin, HIGH);
   }
   else if (currentDirection == 2)
   {
-    // Serial.print(" goOrange 2 : nyala");
-    digitalWrite(signal2[2], LOW);
-    digitalWrite(signal2[1], HIGH);
+    digitalWrite(g2Pin, LOW);
+    digitalWrite(o2Pin, HIGH);
   }
   else if (currentDirection == 3)
   {
-    // Serial.print(" goOrange 3 : nyala");
-    digitalWrite(signal3[2], LOW);
-    digitalWrite(signal3[1], HIGH);
+    digitalWrite(g3Pin, LOW);
+    digitalWrite(o3Pin, HIGH);
   }
   else
   {
-    // Serial.print(" goOrange 4 : nyala");
-    digitalWrite(signal4[2], LOW);
-    digitalWrite(signal4[1], HIGH);
+    digitalWrite(g4Pin, LOW);
+    digitalWrite(o4Pin, HIGH);
   }
 }
 
@@ -485,27 +412,23 @@ void goRed(int currentDirection)
 {
   if (currentDirection == 1)
   {
-    // Serial.print(" goRed 1 : nyala");
-    digitalWrite(signal1[1], LOW);
-    digitalWrite(signal1[0], HIGH);
+    digitalWrite(o1Pin, LOW);
+    digitalWrite(r1Pin, HIGH);
   }
   else if (currentDirection == 2)
   {
-    // Serial.print(" goRed 2 : nyala");
-    digitalWrite(signal2[1], LOW);
-    digitalWrite(signal2[0], HIGH);
+    digitalWrite(o2Pin, LOW);
+    digitalWrite(r2Pin, HIGH);
   }
   else if (currentDirection == 3)
   {
-    // Serial.print(" goRed 3 : nyala");
-    digitalWrite(signal3[1], LOW);
-    digitalWrite(signal3[0], HIGH);
+    digitalWrite(o3Pin, LOW);
+    digitalWrite(r3Pin, HIGH);
   }
   else
   {
-    // Serial.print(" goRed 4 : nyala");
-    digitalWrite(signal4[1], LOW);
-    digitalWrite(signal4[0], HIGH);
+    digitalWrite(o4Pin, LOW);
+    digitalWrite(r4Pin, HIGH);
   }
 }
 
@@ -522,30 +445,30 @@ void goGreen(int currentDirection)
     if (currentDirection == 1)
     {
       msg = "maju 2";
-      // Serial.print(" goGreen 2 : nyala");
-      digitalWrite(signal2[0], LOW);
-      digitalWrite(signal2[2], HIGH);
+      Firebase.setString(fbdo, "/monitoring/lampu", "0010");
+      digitalWrite(r2Pin, LOW);
+      digitalWrite(g2Pin, HIGH);
     }
     else if (currentDirection == 2)
     {
       msg = "maju 3";
-      // Serial.print(" goGreen 3 : nyala");
-      digitalWrite(signal3[0], LOW);
-      digitalWrite(signal3[2], HIGH);
+      Firebase.setString(fbdo, "/monitoring/lampu", "0100");
+      digitalWrite(r3Pin, LOW);
+      digitalWrite(g3Pin, HIGH);
     }
     else if (currentDirection == 3)
     {
       msg = "maju 4";
-      // Serial.print(" goGreen 4 : nyala");
-      digitalWrite(signal4[0], LOW);
-      digitalWrite(signal4[2], HIGH);
+      Firebase.setString(fbdo, "/monitoring/lampu", "1000");
+      digitalWrite(r4Pin, LOW);
+      digitalWrite(g4Pin, HIGH);
     }
     else
     {
       msg = "maju 1";
-      // Serial.print(" goGreen 1 : nyala");
-      digitalWrite(signal1[0], LOW);
-      digitalWrite(signal1[2], HIGH);
+      Firebase.setString(fbdo, "/monitoring/lampu", "0001");
+      digitalWrite(r1Pin, LOW);
+      digitalWrite(g1Pin, HIGH);
     }
     DotMatrix.setTextBuffer(msg.c_str());
     DotMatrix.displayReset();
@@ -612,6 +535,7 @@ void loop()
       {
         msg = cd;
         DotMatrix.setTextAlignment(PA_CENTER);
+        DotMatrix.setTextEffect(PA_SCROLL_DOWN, PA_SCROLL_DOWN);
         DotMatrix.setTextBuffer(msg.c_str());
         DotMatrix.displayReset();
 
@@ -627,11 +551,20 @@ void loop()
         // set the current mode to orange
         orangeStatus = true;
       }
-      else if (cd <= 20)
+      else if (cd <= 5)
       {
         msg = cd;
         DotMatrix.setTextAlignment(PA_CENTER);
         DotMatrix.setTextEffect(PA_SCROLL_DOWN, PA_SCROLL_DOWN);
+        DotMatrix.setTextBuffer(msg.c_str());
+        DotMatrix.displayReset();
+        cd--;
+      }
+      else if (cd <= 7)
+      {
+        msg = "hati-hati";
+        DotMatrix.setTextAlignment(PA_LEFT);
+        DotMatrix.setTextEffect(PA_SCROLL_LEFT, PA_SCROLL_LEFT);
         DotMatrix.setTextBuffer(msg.c_str());
         DotMatrix.displayReset();
         cd--;
@@ -654,12 +587,43 @@ void loop()
       redMillis = millis();
       // change to orange using function
       goRed(currentDirection);
-      // delay 4 milliseconds because of millis bug
-      delay(4);
-      // un set the orange mode
+      // unset the orange mode
       orangeStatus = false;
       // set the current mode to red
       redStatus = true;
+
+      switch (currentDirection)
+      {
+      case 1:
+        Firebase.getInt(fbdo, "/control/green2Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        text = Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        greenDelay = fbdo.intData();
+        break;
+      case 2:
+        Firebase.getInt(fbdo, "/control/green3Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        text = Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        greenDelay = fbdo.intData();
+        break;
+      case 3:
+        Firebase.getInt(fbdo, "/control/green4Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        text = Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        greenDelay = fbdo.intData();
+        break;
+
+      case 4:
+        Firebase.getInt(fbdo, "/control/green1Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        text = Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
+        // delay(100);
+        greenDelay = fbdo.intData();
+        break;
+      }
     }
 
     // if red is on (both ways) then check the time and change to green other direction
@@ -669,45 +633,14 @@ void loop()
       greenMillis = millis();
       // change to green using function
       goGreen(currentDirection);
-      // delay 4 milliseconds because of millis bug
-      delay(4);
-      // un set the red mode
-      redStatus = false;
       // unset the red mode
+      redStatus = false;
+      // set the current mode to green
       greenStatus = true;
 
-      if (currentDirection == 2)
-      {
-        currentDirection = 3;
-        // Firebase.getInt(fbdo, "/control/green3Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
-        // delay(100);
-        // text =  Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
-        // greenDelay = fbdo.intData();
-      }
-      else if (currentDirection == 3)
-      {
-        currentDirection = 4;
-        // Firebase.getInt(fbdo, "/control/green4Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
-        // delay(100);
-        // text =  Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
-        // greenDelay = fbdo.intData();
-      }
-      else if (currentDirection == 4)
-      {
-        currentDirection = 1;
-        // Firebase.getInt(fbdo, "/control/green1Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
-        // delay(100);
-        // text =  Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
-        // greenDelay = fbdo.intData();
-      }
-      else
-      {
-        currentDirection = 2;
-        // Firebase.getInt(fbdo, "/control/green2Delay") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str();
-        // delay(100);
-        // text =  Firebase.getString(fbdo, "/control/text") ? String(fbdo.stringData()).c_str() : fbdo.errorReason().c_str();
-        // greenDelay = fbdo.intData();
-      }
+      currentDirection = (currentDirection == 2) ? 3 : (currentDirection == 3) ? 4
+                                                   : (currentDirection == 4)   ? 1
+                                                                               : 2;
     }
   }
 }
